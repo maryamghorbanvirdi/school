@@ -10,8 +10,6 @@ import java.util.List;
 import javax.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +41,7 @@ public class ScoreController {
   private final ScoreCreateRequestConverter scoreCreateRequestConverter;
   private final ScoreUpdateRequestConverter scoreUpdateRequestConverter;
   private final ScoreViewModelConverter scoreViewModelConverter;
+  private final PageableConverter pageableConverter;
 
   @PostMapping("/scores")
   @Operation(summary = "Create Score", description = "Ability to add a Score")
@@ -60,7 +59,7 @@ public class ScoreController {
     return ResponseEntity.status(HttpStatus.CREATED).body(scoreViewModel);
   }
 
-  @PutMapping("/scores/{scoreId}")
+  @PutMapping("/scores/{scoreId}/update")
   @Operation(summary = "Update Score", description = "Ability to update a Score")
   @ApiResponses(value = {@ApiResponse(responseCode = "400", description = "Bad request", content = @Content), @ApiResponse(responseCode = "404", description = "Not Found", content = @Content)})
   public ResponseEntity<ScoreViewModel> updateScore(@PathVariable String scoreId, @Valid @RequestBody ScoreUpdateRequest scoreUpdateRequest) throws Exception {
@@ -81,11 +80,15 @@ public class ScoreController {
   @GetMapping("/scores")
   @Operation(summary = "Find All Scores", description = "Ability to search all Scores")
   @ApiResponses(value = {@ApiResponse(responseCode = "400", description = "Bad request", content = @Content)})
-  public List<ScoreViewModel> getAllScores(Pageable pageable, @RequestParam String teacherId) throws Exception {
+  public List<ScoreViewModel> getAllScores(
+      @RequestParam(name = "page", defaultValue = "0") int page,
+      @RequestParam(name = "size", defaultValue = "20") int size,
+      @RequestParam(name = "isAsc", defaultValue = "true") boolean isAsc,
+      @RequestParam(name = "propertiesName", defaultValue = "id") String propertiesName, @RequestParam String teacherId) throws Exception {
 
-    log.info("enter getAllScores() :: pageable={}, teacherId={}", pageable, teacherId);
+    log.info("enter getAllScores() :: page={}, size={}, isAsc={}, propertiesName={}, teacherId={}", page, size, isAsc, propertiesName, teacherId);
 
-    var scoresViewModels = scoreService.getAllScores(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()), teacherId)
+    var scoresViewModels = scoreService.getAllScores(pageableConverter.convert(page, size, isAsc, propertiesName), teacherId)
         .map(scoreViewModelConverter::convert)
         .getContent();
 
