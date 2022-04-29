@@ -1,0 +1,6 @@
+version: '2'
+services:
+  school-mongodb:
+    image: docker.io/bitnami/mongodb:5.0
+    ports:
+      - '27017:27017'
